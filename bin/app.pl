@@ -15,6 +15,11 @@ class AngularWebSockets is Bailador::App {
 	}
 
 	submethod BUILD(|) {
+		self.get: '/styles.css' => sub {
+			header('Content-Type', 'text/css');
+			self.static-file: 'src/styles.css';
+		};
+
 		# Yes, this is a catch-all route.
 		# Most of the 'when' clauses can be factored out, but this way I have complete
 		# control of what gets displayed over what route. And until Bailador properly
@@ -43,10 +48,6 @@ class AngularWebSockets is Bailador::App {
 					else {
 						warn "404 no file $stripped-route found";
 					}
-				}
-				when '/styles.css' {
-					header('Content-Type', 'text/css');
-					self.static-file: 'src/styles.css';
 				}
 				default {
 					warn "404 could not find '$route'";
