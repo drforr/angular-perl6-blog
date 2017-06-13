@@ -8,23 +8,20 @@ Installation
 
 You need:
 
-Perl 6 (available at www.perl6.org)
-Bailador for Perl 6 (available via zef)
-Node.js (available at www.nodejs.org)
-Angular 4 (available at www.angular.io - angularjs is for an older version.)
+* Perl 6 (available at www.perl6.org)
+* Node.js (available at www.nodejs.org)
 
 Assuming all of the above are installed:
 
 ```
 $ cd angular-perl6-blog
+$ zef install YAMLish
+$ zef install Bailador
 $ npm install
-$ npm start
-  <ctrl-C>
+$ npm run build
 ```
 
-This process *will* open a new browser tab or window, go to that tab and verify
-that the Node version of the application works, and then kill the Node server
-and close the tab BrowserSync opened.
+This process will compile the TypeScript into ES5 JavaScript.
 
 Running
 =======
@@ -51,7 +48,7 @@ If it *doesn't*, then it's time to dig in to the application a bit. Angular
 src/app) and compiles it into JavaScript, then serves up the JavaScript files.
 That's the process that 'npm start' did during the installation. Or it should
 have done so. Look in the src/app directory, and for every .ts file there should
-be an associated .js and .js.map file present. If there isn't, redo 'npm start'
+be an associated .js and .js.map file present. If there isn't, redo `npm build`
 and make sure that when the browser window opens, that you get what looks to be
 a working application, or at least something with some shiny buttons that you
 can click, rather than 'Loading...'
@@ -65,4 +62,4 @@ Development
 
 This will change, but at the moment if you intend to do any development with
 the TypeScript files (anything with .ts) you'll either need a running Node
-server or figure out how to invoke the TypeScript compiler.
+server or run `npm run build` to compile the TypeScript files.
