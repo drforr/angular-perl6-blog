@@ -59,3 +59,10 @@ can click, rather than 'Loading...'
 If you get stuck, find the Bailador Slack group and ask @drforr, or more rarely
 freenode.net #perl6 - mostly because "modern" editors take up the screen space
 usually reserved for chat windows.
+
+Development
+===========
+
+This will change, but at the moment if you intend to do any development with
+the TypeScript files (anything with .ts) you'll either need a running Node
+server or figure out how to invoke the TypeScript compiler.

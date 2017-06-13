@@ -20,7 +20,21 @@ class AngularWebSockets is Bailador::App {
 			self.static-file: 'src/styles.css';
 		};
 
-		# Yes, this is a catch-all route.
+		# Welcome to the single-page site - /dashboard, /heroes and / all share the
+		# same template page.
+		#
+		self.get: '/dashboard' => sub {
+			self.static-file: 'src/index.html';
+		};
+		self.get: '/heroes' => sub {
+			self.static-file: 'src/index.html';
+		};
+		self.get: '/' => sub {
+			self.static-file: 'src/index.html';
+		};
+
+
+		# Yes, this is (almost) a catch-all route.
 		# Most of the 'when' clauses can be factored out, but this way I have complete
 		# control of what gets displayed over what route. And until Bailador properly
 		# logs 404s this is the simplest way to catch them.
@@ -28,12 +42,6 @@ class AngularWebSockets is Bailador::App {
 		self.get: / ( .+ ) / => sub ($route) {
 			my $stripped-route = $route.substr(1);
 			given $route {
-				when '/' |
-				 	 	 '/heroes' |
-						 '/dashboard'
-				{
-						self.static-file: 'src/index.html';
-				}
 				when '/main.js' |
 				 		'/systemjs-angular-loader.js' |
 						'/systemjs.config.js' |
