@@ -1,4 +1,5 @@
 use v6;
+use JSON::Tiny;
 use Bailador;
 use Bailador::Route::StaticFile;
 Bailador::import();
@@ -33,6 +34,20 @@ class AngularWebSockets is Bailador::App {
 			self.static-file: 'src/index.html';
 		};
 
+		self.get: / '/api/heroes' '/' ( \d+ ) / => sub ( $id ) {
+			die "################## GET /api/heroes: $id"
+		}
+		self.get: '/api/heroes' => sub {
+			#die "################## GET /api/heroes";
+			header('Content-Type', 'application/json');
+			return to-json( [ { id => 1, name => 'Deadpool' } ] );#'[ { "id": "1", "name": "Deadpool"} ]'
+		}
+		self.delete: / '/api/heroes' '/' ( \d+ ) / => sub ( $id ) {
+			die "################## DELETE /api/heroes: $id"
+		}
+		self.post: '/api/heroes' => sub {
+			die "################## POST /api/heroes"
+		}
 
 		# Yes, this is (almost) a catch-all route.
 		# Most of the 'when' clauses can be factored out, but this way I have complete
