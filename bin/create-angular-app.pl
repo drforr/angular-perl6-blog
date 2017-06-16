@@ -76,25 +76,48 @@ _END_
 class Sample-Hero {
 	also does Angular;
 
-	method hero-detail-component {
+	has %.angular =
+		core   => '@angular/core',
+		router => '@angular/router',
+		common => '@angular/common',
+		forms  => '@angular/forms'
+	;
+
+	has %.hero =
+		detail-component => './hero-detail.component',
+		list-component   => './hero-list.component',
+		service          => './hero.service'
+	;
+
+	has $.key = 'id';
+	has @.table =
+		{ name => 'id',   type => 'Int' },
+		{ name => 'name', type => 'Str' }
+	;
+
+	has $.service-file          = 'hero.service';
+	has $.detail-component-file = 'hero-detail.component';
+	has $.list-component-file   = 'hero-list.component';
+
+	method detail-component {
+		#'../animations'   => [< slideInDownAnimation >],
 		my %import =
 			'rxjs/add/operator/switchMap' => Any,
-			'@angular/core'   => [< Component OnInit HostBinding >],
-			'@angular/router' => [< Router ActivatedRoute Params >],
-			'../animations'   => [< slideInDownAnimation >],
-			'./hero.service'  => [< Hero HeroService >],
+			%.angular<core>   => [< Component OnInit HostBinding >],
+			%.angular<router> => [< Router ActivatedRoute Params >],
+			%.hero<service>   => [< Hero HeroService >],
 		;
 
 		my $imports = self.imports-toString( %import );
 
 		#animations => '[ slideInDownAnimation ]',
 		my %component =
-			template => q:to[_END_],
-  <h2>HEROES</h2>
+			template => qq:to[_END_],
+  <h2>Hero Detail</h2>
   <div *ngIf="hero">
-    <h3>"\{\{ hero.name \}\}"</h3>
+    <h3>Name: "\{\{ hero.name \}\}"</h3>
     <div>
-      <label>Id: </label>\{\{ hero.id \}\}</div>
+      <label>{tc( $.key )}: </label>\{\{ hero.{$.key} \}\}</div>
     <div>
       <label>Name: </label>
       <input [(ngModel)]="hero.name" placeholder="name"/>
@@ -144,23 +167,24 @@ $module
 _END_
 	}
 
-	method hero-list-component {
+	method list-component {
 		my %import = 
 			'rxjs/add/operator/switchMap' => Any,
-			'rxjs/Observable' => [< Observable >],
-			'@angular/core'   => [< Component OnInit >],
-			'@angular/router' => [< Router ActivatedRoute Params >],
-			'./hero.service'  => [< Hero HeroService >]
+			'rxjs/Observable'             => [< Observable >],
+
+			%.angular<core>   => [< Component OnInit >],
+			%.angular<router> => [< Router ActivatedRoute Params >],
+			%.hero<service>   => [< Hero HeroService >]
 		;
 		my $imports = self.imports-toString( %import );
 		my %component =
-			template => q:to[_END_],
-    <h2>HEROES</h2>
+			template => qq:to[_END_],
+    <h2>Hero List</h2>
     <ul class="items">
       <li *ngFor="let hero of heroes | async"
         [class.selected]="isSelected(hero)"
         (click)="onSelect(hero)">
-        <span class="badge">\{\{ hero.id \}\}</span> \{\{ hero.name \}\}
+        <span class="badge">\{\{ hero.{$.key} \}\}</span> \{\{ hero.name \}\}
       </li>
     </ul>
 
@@ -206,7 +230,7 @@ _END_
 
 	method hero-service {
 		my %import =
-			'@angular/core' => [< Injectable >]
+			%.angular<core> => [< Injectable >]
 		;
 		my $import = self.imports-toString( %import );
 		my $heroModule = self.export-class-toString(
@@ -248,11 +272,11 @@ _END_
 
 	method heroes-routing-module {
 		my %import =
-			'@angular/core'   => [< NgModule >],
-			'@angular/router' => [< RouterModule Routes >],
+			%.angular<core>   => [< NgModule >],
+			%.angular<router> => [< RouterModule Routes >],
 
-			'./hero-list.component'   => [< HeroListComponent >],
-			'./hero-detail.component' => [< HeroDetailComponent >]
+			%.hero<list-component>   => [< HeroListComponent >],
+			%.hero<detail-component> => [< HeroDetailComponent >]
 		;
 		my $import = self.imports-toString( %import );
 		my %ngModule =
@@ -278,14 +302,14 @@ _END_
 
 	method heroes-module {
 		my %import =
-			'@angular/core'   => [< NgModule >],
-			'@angular/common' => [< CommonModule >],
-			'@angular/forms'  => [< FormsModule >],
+			%.angular<core>   => [< NgModule >],
+			%.angular<common> => [< CommonModule >],
+			%.angular<forms>  => [< FormsModule >],
 
-			'./hero-list.component'   => [< HeroListComponent >],
-			'./hero-detail.component' => [< HeroDetailComponent >],
+			%.hero<list-component>   => [< HeroListComponent >],
+			%.hero<detail-component> => [< HeroDetailComponent >],
 
-			'./hero.service' => [< HeroService >],
+			%.hero<service>          => [< HeroService >],
 
 			'./heroes-routing.module' => [< HeroRoutingModule >]
 		;
@@ -309,24 +333,30 @@ $module
 _END_
 	}
 
+	method file-name( $name ) {
+		my $path = './src/app/heroes/';
+		return $path ~ $name ~ ".ts";
+	}
+
 	method generate-files {
-		my $fh = open :w, "./src/app/heroes/hero-detail.component.ts";
-		$fh.say( self.hero-detail-component() );
+		my $path = './src/app/heroes/';
+		my $fh = open :w, self.file-name( $.detail-component-file );
+		$fh.say( self.detail-component() );
 		$fh.close;
 
-		$fh = open :w, "./src/app/heroes/hero-list.component.ts";
-		$fh.say( self.hero-list-component() );
+		$fh = open :w, self.file-name( $.list-component-file );
+		$fh.say( self.list-component() );
 		$fh.close;
 
-		$fh = open :w, "./src/app/heroes/hero.service.ts";
+		$fh = open :w, self.file-name( $.service-file );
 		$fh.say( self.hero-service() );
 		$fh.close;
 
-		$fh = open :w, "./src/app/heroes/heroes-routing.module.ts";
+		$fh = open :w, self.file-name( 'heroes-routing.module' );
 		$fh.say( self.heroes-routing-module() );
 		$fh.close;
 
-		$fh = open :w, "./src/app/heroes/heroes.module.ts";
+		$fh = open :w, self.file-name( 'heroes.module' );
 		$fh.say( self.heroes-module() );
 		$fh.close;
 	}
