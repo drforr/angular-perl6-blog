@@ -1,368 +1,191 @@
-role Angular {
-	method _import-str( Str $module, $package-ref ) {
-		my $description = qq{'$module'};
-		if $package-ref {
-			my $package-str = @($package-ref).join(', ');
-			$description = qq{\{ $package-str \} from '$module'};
-		}
-		return qq:to[_END_];
-import $description;
-_END_
-	}
-
-	method imports-toString( %import ) {
-		my $imports = '';
-		for %import.kv -> $k, $v {
-			$imports ~= self._import-str( $k, $v );
-		}
-		return $imports;
-	}
-
-	method component-toString( %import ) {
-		my $component = '';
-		for %import.kv -> $k, $v {
-			if $k eq 'template' {
-				$component ~= qq:to[_END_];
-  template: \`
-$v
-\`,
-_END_
-			}
-			else {
-				$component ~= "$k: $v,";
-			}
-		}
+role Angular-Component {
+	method to-component( Str $str ) {
 		return qq:to[_END_];
 \@Component(\{
-$component
+$str
 \})
 _END_
 	}
 
-	method injectable-toString( ) {
+	method to-template( Str $str ) {
 		return qq:to[_END_];
-\@Injectable()
+  template: `
+$str
+  `
 _END_
 	}
 
-	method ngModule-toString( %import ) {
-		my $ngModule = '';
-		for %import.kv -> $k, $v {
-			my $v-string = @( $v ).join(', ');
-			$ngModule ~= "$k: [ $v-string ],";
-		}
+	method to-class( Str $name, Str $str ) {
 		return qq:to[_END_];
-\@NgModule(\{
-$ngModule
-\})
-_END_
-	}
-
-	method export-class-toString(
-		$name, $content, $methods, $implements = Any ) {
-		my $description = $name;
-		if $implements {
-			$description = qq{$name implements $implements};
-		}
-		return qq:to[_END_];
-export class $description \{
-$content
-$methods
+export class $name implements OnInit \{
+$str
 \}
+_END_
+	}
+
+	method common-import {
+		return qq:to[_END_];
+import 'rxjs/add/operator/switchMap';
+import \{ Observable \}                     from 'rxjs/Observable';
+import \{ Component, OnInit \}              from '\@angular/core';
+import \{ ActivatedRoute, Router, Params \} from '\@angular/router';
 _END_
 	}
 }
 
-class Sample-Hero {
-	also does Angular;
+class List-Component {
+	also does Angular-Component;
 
-	has %.angular =
-		core   => '@angular/core',
-		router => '@angular/router',
-		common => '@angular/common',
-		forms  => '@angular/forms'
-	;
-
-	has %.hero =
-		detail-component => './hero-detail.component',
-		list-component   => './hero-list.component',
-		service          => './hero.service'
-	;
-
-	has $.key = 'id';
-	has @.table =
-		{ name => 'id',   type => 'Int' },
-		{ name => 'name', type => 'Str' }
-	;
-
-	has $.service-file          = 'hero.service';
-	has $.detail-component-file = 'hero-detail.component';
-	has $.list-component-file   = 'hero-list.component';
-
-	method detail-component {
-		#'../animations'   => [< slideInDownAnimation >],
-		my %import =
-			'rxjs/add/operator/switchMap' => Any,
-			%.angular<core>   => [< Component OnInit HostBinding >],
-			%.angular<router> => [< Router ActivatedRoute Params >],
-			%.hero<service>   => [< Hero HeroService >],
-		;
-
-		my $imports = self.imports-toString( %import );
-
-		#animations => '[ slideInDownAnimation ]',
-		my %component =
-			template => qq:to[_END_],
-  <h2>Hero Detail</h2>
-  <div *ngIf="hero">
-    <h3>Name: "\{\{ hero.name \}\}"</h3>
-    <div>
-      <label>{tc( $.key )}: </label>\{\{ hero.{$.key} \}\}</div>
-    <div>
-      <label>Name: </label>
-      <input [(ngModel)]="hero.name" placeholder="name"/>
-    </div>
-    <p>
-      <button (click)="gotoHeroes()">Back</button>
-    </p>
-  </div>
-_END_
-		;
-		my $component = self.component-toString( %component );
-		my $module = self.export-class-toString(
-			'HeroDetailComponent', qq:to[_END_], qq:to[_END_], 'OnInit'
-  \@HostBinding('\@routeAnimation') routeAnimation = true;
-  \@HostBinding('style.display')   display = 'block';
-  \@HostBinding('style.position')  position = 'absolute';
-
-  hero: Hero;
-_END_
-  constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private service: HeroService
-  ) \{\}
-
-  ngOnInit() \{
-    this.route.params
-      // (+) converts string 'id' to a number
-      .switchMap((params: Params) => this.service.getHero(+params['id']))
-      .subscribe((hero: Hero) => this.hero = hero);
-  \}
-
-  gotoHeroes() \{
-    let heroId = this.hero ? this.hero.id : null;
-    // Pass along the hero id if available
-    // so that the HeroList component can select that hero.
-    // Include a junk 'foo' property for fun.
-    this.router.navigate(['/heroes', \{ id: heroId, foo: 'foo' \}]);
-  \}
-_END_
-		);
-		return qq:to[_END_];
-$imports
-
-$component
-$module
+	method import-service( Str $table-name ) {
+		my $import = qq:to[_END_];
+import \{ {tc( $table-name )}, {tc( $table-name )}Service \} from './{$table-name}.service';
 _END_
 	}
 
-	method list-component {
-		my %import = 
-			'rxjs/add/operator/switchMap' => Any,
-			'rxjs/Observable'             => [< Observable >],
-
-			%.angular<core>   => [< Component OnInit >],
-			%.angular<router> => [< Router ActivatedRoute Params >],
-			%.hero<service>   => [< Hero HeroService >]
-		;
-		my $imports = self.imports-toString( %import );
-		my %component =
-			template => qq:to[_END_],
-    <h2>Hero List</h2>
+	method template-list( Str $item, Str $collection ) {
+		return qq:to[_END_];
     <ul class="items">
-      <li *ngFor="let hero of heroes | async"
-        [class.selected]="isSelected(hero)"
-        (click)="onSelect(hero)">
-        <span class="badge">\{\{ hero.{$.key} \}\}</span> \{\{ hero.name \}\}
+      <li *ngFor="let {$item} of {$collection} | async"
+        [class.selected]="isSelected({$item})"
+        (click)="onSelect({$item})">
+        <span class="badge">\{\{ {$item}.id \}\}</span>
+        \{\{ {$item}.name \}\}
       </li>
     </ul>
+_END_
+	}
+
+	method crisis-list-component {
+		my $table-name     = 'crisis';
+		my $common-import  = self.common-import;
+		my $import         = self.import-service( $table-name );
+		my $type-name      = tc( $table-name );
+		my $component-name = "{$type-name}ListComponent";
+		my $item           = 'crisis';
+		my $collection     = 'crises';
+		my $list-html      = self.template-list( $item, $collection );
+		my $component =
+			self.to-component( self.to-template( qq:to[_END_] ) );
+    <h2>{tc( $table-name )} List</h2>
+$list-html
+
+    <router-outlet></router-outlet>
+_END_
+
+		my $class =
+			self.to-class( $component-name, qq:to[_END_] );
+  {$collection}: Observable\<{$type-name}[]\>;
+
+  private selectedId: number;
+
+  ngOnInit() \{
+    this.{$collection} = this.route.params
+      .switchMap((params: Params) => \{
+        this.selectedId = +params['id'];
+        return this.service.getCrises();
+      \});
+  \}
+
+  constructor(
+    private service: CrisisService,
+    private route:   ActivatedRoute,
+    private router:  Router
+  ) \{\}
+
+  isSelected({$item}: {$type-name}) \{
+    return {$item}.id === this.selectedId;
+  \}
+
+  onSelect({$item}: {$type-name}) \{
+    this.selectedId = {$item}.id;
+
+    // Navigate with relative link
+    this.router.navigate([{$item}.id], \{ relativeTo: this.route \});
+  \}
+_END_
+
+		return qq:to[_END_];
+$common-import
+$import
+$component
+$class
+_END_
+	}
+
+	method hero-list-component {
+		my $table-name     = 'hero';
+		my $common-import  = self.common-import;
+		my $import         = self.import-service( $table-name );
+		my $type-name      = tc( $table-name );
+		my $component-name = "{$type-name}ListComponent";
+		my $item           = 'hero';
+		my $collection     = 'heroes';
+		my $list-html      = self.template-list( $item, $collection ); 
+		my $component =
+			self.to-component( self.to-template( qq:to[_END_] ));
+    <h2>{tc( $table-name )} List</h2>
+$list-html
 
     <button routerLink="/sidekicks">Go to sidekicks</button>
 _END_
-		;
-		my $component = self.component-toString( %component );
-		my $module = self.export-class-toString(
-			'HeroListComponent', qq:to[_END_], qq:to[_END_], 'OnInit'
-  heroes: Observable\<Hero\[\]\>;
+
+		my $class = self.to-class( $component-name, qq:to[_END_] );
+  {$collection}: Observable\<{$type-name}[]\>;
 
   private selectedId: number;
-_END_
-  constructor(
-    private service: HeroService,
-    private route: ActivatedRoute,
-    private router: Router
-  ) \{\}
 
   ngOnInit() \{
-    this.heroes = this.route.params
+    this.{$collection} = this.route.params
       .switchMap((params: Params) => \{
         this.selectedId = +params['id'];
         return this.service.getHeroes();
       \});
   \}
 
-  isSelected(hero: Hero) \{ return hero.id === this.selectedId; \}
+  constructor(
+    private service: HeroService,
+    private route:   ActivatedRoute,
+    private router:  Router
+  ) \{\}
 
-  onSelect(hero: Hero) \{
-    this.router.navigate(['/hero', hero.id]);
+  isSelected({$item}: {$type-name}) \{
+    return {$item}.id === this.selectedId;
+  \}
+
+  onSelect({$item}: {$type-name}) \{
+    this.router.navigate(['/hero', {$item}.id]);
   \}
 _END_
-		);
-		return qq:to[_END_];
-// TODO SOMEDAY: Feature Componetized like CrisisCenter
-$imports
 
+		return qq:to[_END_];
+$common-import
+$import
 $component
-$module
-_END_
-	}
-
-	method hero-service {
-		my %import =
-			%.angular<core> => [< Injectable >]
-		;
-		my $import = self.imports-toString( %import );
-		my $heroModule = self.export-class-toString(
-			'Hero', '', qq:to[_END_],
-  constructor(public id: number, public name: string) \{ \}
-_END_
-		);
-		my $heroServiceModule = self.export-class-toString(
-			'HeroService', '', qq:to[_END_],
-  getHeroes() \{ return heroesPromise; \}
-
-  getHero(id: number | string) \{
-    return heroesPromise
-      .then(heroes => heroes.find(hero => hero.id === +id));
-  \}
-_END_
-		);
-		my $injectable = self.injectable-toString();
-		return qq:to[_END_];
-$import
-
-$heroModule
-
-let HEROES = [
-  new Hero(11, 'Mr. Nice'),
-  new Hero(12, 'Narco'),
-  new Hero(13, 'Bombasto'),
-  new Hero(14, 'Celeritas'),
-  new Hero(15, 'Magneta'),
-  new Hero(16, 'RubberMan')
-];
-
-let heroesPromise = Promise.resolve(HEROES);
-
-$injectable
-$heroServiceModule
-_END_
-	}
-
-	method heroes-routing-module {
-		my %import =
-			%.angular<core>   => [< NgModule >],
-			%.angular<router> => [< RouterModule Routes >],
-
-			%.hero<list-component>   => [< HeroListComponent >],
-			%.hero<detail-component> => [< HeroDetailComponent >]
-		;
-		my $import = self.imports-toString( %import );
-		my %ngModule =
-			imports => [ 'RouterModule.forChild(heroesRoutes)' ],
-			exports => [ 'RouterModule' ],
-		;
-		my $ngModule = self.ngModule-toString( %ngModule );
-		my $module = self.export-class-toString(
-			'HeroRoutingModule', '', ''
-		);
-		return qq:to[_END_];
-$import
-
-const heroesRoutes: Routes = [
-  \{ path: 'heroes',  component: HeroListComponent \},
-  \{ path: 'hero/:id', component: HeroDetailComponent \}
-];
-
-$ngModule
-$module
-_END_
-	}
-
-	method heroes-module {
-		my %import =
-			%.angular<core>   => [< NgModule >],
-			%.angular<common> => [< CommonModule >],
-			%.angular<forms>  => [< FormsModule >],
-
-			%.hero<list-component>   => [< HeroListComponent >],
-			%.hero<detail-component> => [< HeroDetailComponent >],
-
-			%.hero<service>          => [< HeroService >],
-
-			'./heroes-routing.module' => [< HeroRoutingModule >]
-		;
-		my $import = self.imports-toString( %import );
-		my %ngModule = 
-			imports =>
-				[< CommonModule FormsModule HeroRoutingModule >],
-			declarations =>
-				[< HeroListComponent HeroDetailComponent >],
-			providers => [< HeroService >]
-		;
-		my $ngModule = self.ngModule-toString( %ngModule );
-		my $module = self.export-class-toString(
-			'HeroesModule', '', ''
-		);
-		return qq:to[_END_];
-$import
-
-$ngModule
-$module
+$class
 _END_
 	}
 
 	method file-name( $name ) {
-		my $path = './src/app/heroes/';
-		return $path ~ $name ~ ".ts";
+		return './src/app/' ~ $name ~ '.ts';
 	}
 
 	method generate-files {
-		my $path = './src/app/heroes/';
-		my $fh = open :w, self.file-name( $.detail-component-file );
-		$fh.say( self.detail-component() );
+		my $path = './src/app/';
+		my $fh;
+
+		$fh = open :w,
+			self.file-name( 'heroes/hero-list.component' );
+		$fh.say( self.hero-list-component() );
 		$fh.close;
 
-		$fh = open :w, self.file-name( $.list-component-file );
-		$fh.say( self.list-component() );
-		$fh.close;
-
-		$fh = open :w, self.file-name( $.service-file );
-		$fh.say( self.hero-service() );
-		$fh.close;
-
-		$fh = open :w, self.file-name( 'heroes-routing.module' );
-		$fh.say( self.heroes-routing-module() );
-		$fh.close;
-
-		$fh = open :w, self.file-name( 'heroes.module' );
-		$fh.say( self.heroes-module() );
+		$fh = open :w,
+			self.file-name( 'crisis-center/crisis-list.component' );
+		$fh.say( self.crisis-list-component() );
 		$fh.close;
 	}
 }
 
 sub MAIN {
-	my $sample-hero = Sample-Hero.new;
-	$sample-hero.generate-files;
+	my $list-component = List-Component.new;
+	$list-component.generate-files;
 }
