@@ -24,3 +24,4 @@ export class HeroService {
       .then(heroes => heroes.find(hero => hero.id === +id));
   }
 }
+

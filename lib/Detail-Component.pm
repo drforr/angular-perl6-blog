@@ -6,6 +6,7 @@ class Detail-Component {
 		my $This         = 'CrisisDetailComponent';
 		my $service-file = 'crisis.service';
 		my $fetch-method = 'getCrises';
+		my $jump-method  = 'gotoCrises';
 		my $Type         = 'Crisis';
 		my $item         = 'crisis';
 		my $collection   = 'crises';
@@ -55,12 +56,12 @@ export class {$This} implements OnInit \{
   \}
 
   cancel() \{
-    this.gotoCrises();
+    this.{$jump-method}();
   \}
 
   save() \{
     this.{$item}.name = this.editName;
-    this.gotoCrises();
+    this.{$jump-method}();
   \}
 
   canDeactivate(): Promise<boolean> | boolean \{
@@ -70,9 +71,11 @@ export class {$This} implements OnInit \{
     return this.dialogService.confirm('Discard changes?');
   \}
 
-  gotoCrises() \{
+  {$jump-method}() \{
     let crisisId = this.{$item} ? this.{$item}.id : null;
-    this.router.navigate(['../', \{ id: crisisId, foo: 'foo' \}], \{ relativeTo: this.route \});
+    this.router.navigate(['../', \{ id: crisisId, foo: 'foo' \}], \{
+      relativeTo: this.route
+    \});
   \}
 \}
 _END_
@@ -85,7 +88,8 @@ _END_
 		my $This         = 'HeroDetailComponent';
 		my $Service      = 'HeroService';
 		my $service-file = 'hero.service';
-		my $fetch-method = 'getHeroes';
+		my $fetch-method = 'getHero';
+		my $jump-method  = 'gotoHeroes';
 		my $Type         = 'Hero';
 		my $item         = 'hero';
 		my $collection   = 'heroes';
@@ -121,20 +125,20 @@ export class {$This} implements OnInit \{
   constructor(
     private route:   ActivatedRoute,
     private router:  Router,
-    private service: HeroService
+    private service: {$Service}
   ) \{\}
 
   cancel() \{
-    this.gotoHeroes();
+    this.{$jump-method}();
   \}
 
   ngOnInit() \{
     this.route.params
-      .switchMap((params: Params) => this.service.getHero(+params['id']))
+      .switchMap((params: Params) => this.service.{$fetch-method}(+params['id']))
       .subscribe(({$item}: {$Type}) => this.{$item} = {$item});
   \}
 
-  gotoHeroes() \{
+  {$jump-method}() \{
     let heroId = this.{$item} ? this.{$item}.id : null;
     this.router.navigate(['/heroes', \{ id: heroId, foo: 'foo' \}]);
   \}
