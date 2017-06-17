@@ -1,3 +1,5 @@
+import { Injectable } from '@angular/core';
+
 export class Crisis {
   constructor(public id: number, public name: string) { }
 }
@@ -11,19 +13,16 @@ const CRISES = [
 
 let crisesPromise = Promise.resolve(CRISES);
 
-import { Injectable } from '@angular/core';
-
 @Injectable()
 export class CrisisService {
-
-  static nextCrisisId = 100;
-
   getCrises() { return crisesPromise; }
 
   getCrisis(id: number | string) {
     return crisesPromise
       .then(crises => crises.find(crisis => crisis.id === +id));
   }
+
+  static nextCrisisId = 100;
 
   addCrisis(name: string) {
     name = name.trim();

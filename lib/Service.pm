@@ -3,14 +3,17 @@ class Service {
 		# Just to help keep things straight, capitalize the variable
 		# name as well.
 		#
-		my $This         = 'CrisisService';
-		my $service-file = 'crisis.service';
-		my $fetch-method = 'getCrises';
-		my $jump-method  = 'gotoCrises';
-		my $Type         = 'Crisis';
-		my $item         = 'crisis';
-		my $collection   = 'crises';
+		my $This             = 'CrisisService';
+		my $service-file     = 'crisis.service';
+		my $fetch-all-method = 'getCrises';
+		my $fetch-method     = 'getCrisis';
+		my $Type             = 'Crisis';
+		my $promise          = 'crisesPromise';
+		my $item             = 'crisis';
+		my $collection       = 'crises';
 		return qq:to[_END_];
+import \{ Injectable \} from '\@angular/core';
+
 export class {$Type} \{
   constructor(public id: number, public name: string) \{ \}
 \}
@@ -22,31 +25,17 @@ const CRISES = [
   new {$Type}(4, 'Procrastinators Meeting Delayed Again'),
 ];
 
-let crisesPromise = Promise.resolve(CRISES);
-
-import \{ Injectable \} from '\@angular/core';
+let {$promise} = Promise.resolve(CRISES);
 
 \@Injectable()
 export class {$This} \{
+  {$fetch-all-method}() \{ return {$promise}; \}
 
-  static nextCrisisId = 100;
-
-  getCrises() \{ return crisesPromise; \}
-
-  getCrisis(id: number | string) \{
-    return crisesPromise
+  {$fetch-method}(id: number | string) \{
+    return {$promise}
       .then({$collection} => {$collection}.find({$item} => {$item}.id === +id));
   \}
-
-  addCrisis(name: string) \{
-    name = name.trim();
-    if (name) \{
-      let {$item} = new {$Type}({$This}.nextCrisisId++, name);
-      crisesPromise.then({$collection} => {$collection}.push({$item}));
-    \}
-  \}
 \}
-
 _END_
 	}
 
@@ -54,38 +43,39 @@ _END_
 		# Just to help keep things straight, capitalize the variable
 		# name as well.
 		#
-		my $This         = 'HeroService';
-		my $service-file = 'hero.service';
-		my $fetch-method = 'getHero';
-		my $jump-method  = 'gotoHeroes';
-		my $Type         = 'Hero';
-		my $item         = 'hero';
-		my $collection   = 'heroes';
+		my $This             = 'HeroService';
+		my $service-file     = 'hero.service';
+		my $fetch-all-method = 'getHeroes';
+		my $fetch-method     = 'getHero';
+		my $Type             = 'Hero';
+		my $promise          = 'heroesPromise';
+		my $item             = 'hero';
+		my $collection       = 'heroes';
 		return qq:to[_END_];
 import \{ Injectable \} from '\@angular/core';
 
-export class Hero \{
+export class {$Type} \{
   constructor(public id: number, public name: string) \{ \}
 \}
 
-let HEROES = [
-  new Hero(11, 'Mr. Nice'),
-  new Hero(12, 'Narco'),
-  new Hero(13, 'Bombasto'),
-  new Hero(14, 'Celeritas'),
-  new Hero(15, 'Magneta'),
-  new Hero(16, 'RubberMan')
+const HEROES = [
+  new {$Type}(11, 'Mr. Nice'),
+  new {$Type}(12, 'Narco'),
+  new {$Type}(13, 'Bombasto'),
+  new {$Type}(14, 'Celeritas'),
+  new {$Type}(15, 'Magneta'),
+  new {$Type}(16, 'RubberMan')
 ];
 
-let heroesPromise = Promise.resolve(HEROES);
+let {$promise} = Promise.resolve(HEROES);
 
 \@Injectable()
-export class HeroService \{
-  getHeroes() \{ return heroesPromise; \}
+export class {$This} \{
+  {$fetch-all-method}() \{ return {$promise}; \}
 
-  getHero(id: number | string) \{
-    return heroesPromise
-      .then(heroes => heroes.find(hero => hero.id === +id));
+  {$fetch-method}(id: number | string) \{
+    return {$promise}
+      .then({$collection} => {$collection}.find({$item} => {$item}.id === +id));
   \}
 \}
 _END_
