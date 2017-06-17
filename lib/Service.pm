@@ -11,15 +11,15 @@ class Service {
 		my $item         = 'crisis';
 		my $collection   = 'crises';
 		return qq:to[_END_];
-export class Crisis \{
+export class {$Type} \{
   constructor(public id: number, public name: string) \{ \}
 \}
 
 const CRISES = [
-  new Crisis(1, 'Dragon Burning Cities'),
-  new Crisis(2, 'Sky Rains Great White Sharks'),
-  new Crisis(3, 'Giant Asteroid Heading For Earth'),
-  new Crisis(4, 'Procrastinators Meeting Delayed Again'),
+  new {$Type}(1, 'Dragon Burning Cities'),
+  new {$Type}(2, 'Sky Rains Great White Sharks'),
+  new {$Type}(3, 'Giant Asteroid Heading For Earth'),
+  new {$Type}(4, 'Procrastinators Meeting Delayed Again'),
 ];
 
 let crisesPromise = Promise.resolve(CRISES);
@@ -27,7 +27,7 @@ let crisesPromise = Promise.resolve(CRISES);
 import \{ Injectable \} from '\@angular/core';
 
 \@Injectable()
-export class CrisisService \{
+export class {$This} \{
 
   static nextCrisisId = 100;
 
@@ -35,14 +35,14 @@ export class CrisisService \{
 
   getCrisis(id: number | string) \{
     return crisesPromise
-      .then(crises => crises.find(crisis => crisis.id === +id));
+      .then({$collection} => {$collection}.find({$item} => {$item}.id === +id));
   \}
 
   addCrisis(name: string) \{
     name = name.trim();
     if (name) \{
-      let crisis = new Crisis(CrisisService.nextCrisisId++, name);
-      crisesPromise.then(crises => crises.push(crisis));
+      let {$item} = new {$Type}({$This}.nextCrisisId++, name);
+      crisesPromise.then({$collection} => {$collection}.push({$item}));
     \}
   \}
 \}
